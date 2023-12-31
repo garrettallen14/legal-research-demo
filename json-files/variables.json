@@ -1,0 +1,16 @@
+{
+    "background": [
+        "Researching Case Law:",
+        "NEEDS: {",
+        "- Clear, concise statement of rule from high court",
+        "- Recent reaffirmation from the binding lower courts",
+        "- Cases that approximate your facts",
+        "- Cases that state the principles in the most advantageous way (the",
+        "position you represent wins)",
+        "- Cases your opponent will rely on"
+    ],
+    "issue": [
+        "ISSUE_DESCRIPTION: 'Thompson arrested for stealing bees. Police get warrant for GPS tracker. Warrant expires, but police continue to track and see him going to known drug distribution center. Found with 10 lbs of cocaine in trunk.'",
+        "QUESTION: 'Should the police be allowed to use evidence discovered after warrant expired?'"
+    ]
+}
