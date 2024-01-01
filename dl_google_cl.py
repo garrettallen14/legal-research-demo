@@ -74,7 +74,7 @@ def parse_links(links):
     prefix = 'https://scholar.google.com/'
 
     filtered_and_modified_list = [
-        'https://scholar.google.com' + item if '/scholar_case?case=' in item and not item.startswith('https://') else item
+        prefix + item if '/scholar_case?case=' in item and not item.startswith('https://') else item
         for item in links if '/scholar_case?case=' in item
     ]
 
@@ -139,3 +139,47 @@ def get_citation_url(citation, soup):
             return 'https://scholar.google.com' + link
 
     return None
+
+def create_link_query(input_string, prefix='https://scholar.google.com/scholar?hl=en&as_sdt=6%2C33&q='):
+    """
+    Function to convert a string into a structured link query.
+
+    :param input_string: The input string to be converted.
+    :param prefix: The prefix for the link, default is set to Google Scholar.
+    :return: A structured link query.
+    """
+    # Split the input string into words and join them with '+'
+    query = '+'.join(input_string.split())
+    # Combine the prefix and the query to form the full link
+    full_link = prefix + query
+    return full_link
+
+
+def parse_query_url(url, proxies, session):
+
+    global current_proxy_index  # Use the global index
+    print(current_proxy_index)
+    # Check if there are proxies in the list
+    if not proxies:
+        print("No proxies available.")
+        return "", []
+
+    # Rotate proxies
+    proxy = proxies[current_proxy_index]  # Use the current proxy
+    session.proxies.update({'http': proxy, 'https': proxy})
+    current_proxy_index = (current_proxy_index + 1) % len(proxies)  # Update the index for next use
+
+
+    # Send an HTTP GET request to the URL
+    response = requests.get(url)
+    
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Extracting case names and links
+    cases = []
+    for case in soup.find_all('div', class_='gs_ri'):
+        case_name = case.find('h3', class_='gs_rt').get_text()
+        case_link = case.find('a')['href']
+        cases.append((case_name, case_link))
+        
+    return cases
