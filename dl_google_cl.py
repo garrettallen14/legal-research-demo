@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 import time
 import re
-
+import random
 
 current_proxy_index = 0
 
@@ -26,7 +26,7 @@ def get_proxies(mode='direct'):
         return []
 
     proxy_data = response.json()
-    print("Full API Response:", proxy_data)  # Log the full response
+    # print("Full API Response:", proxy_data)  # Log the full response
 
 
     if 'results' in proxy_data:
@@ -183,3 +183,66 @@ def parse_query_url(url, proxies, session):
         cases.append((case_name, case_link))
         
     return cases
+
+def count_case_appearances(input_list):
+    # Flatten the list of lists
+    flat_list = [item for sublist in input_list for item in sublist]
+
+    # Count appearances and store one link per case using a dictionary
+    count_dict = {}
+    for case, link in flat_list:
+        if case in count_dict:
+            # Increment the count, keep the existing link
+            count, _ = count_dict[case]
+            count_dict[case] = (count + 1, link)
+        else:
+            # New case, set count to 1 and store the link
+            count_dict[case] = (1, link)
+
+    # Create a list of tuples (case, link, count) from the dictionary
+    counted_list = [(case, link, count) for case, (count, link) in count_dict.items()]
+
+    # Sort the list based on the count in descending order
+    sorted_counted_list = sorted(counted_list, key=lambda x: x[2], reverse=True)
+
+    return sorted_counted_list
+
+
+def get_cases_from_queries(queries, proxies, session):
+    # list of all the cases that appear
+    all_cases = []
+    # list of top three (3) most relevant cases for each search
+    top_cases = []
+
+    for query in queries:
+        query_url = create_link_query(query)
+        time.sleep(2.5)
+        potential_cases = parse_query_url(query_url,proxies=proxies,session=session)
+        all_cases.append(potential_cases)
+        top_cases.append(potential_cases[:3])
+
+    return all_cases, top_cases
+
+
+def get_relevant_searches(queries, proxies, session, num_cases=6):
+
+    all_cases, top_cases = get_cases_from_queries(queries, proxies, session)
+
+    # flatten top_cases
+    top_cases = [item for sublist in top_cases for item in sublist]
+    # sort all_cases
+    sorted_cases = count_case_appearances(all_cases)
+
+    # Start with cases that have more than one occurrence
+    search_list = [case for case in sorted_cases if case[2] > 1]
+
+    if len(search_list) <= num_cases:
+        case_names = [item[0] for item in search_list]
+        remaining_top_cases = [case for case in top_cases if case[0] not in case_names]
+
+        num_indices = min(num_cases-len(search_list), len(remaining_top_cases))
+        unique_indices = random.sample(range(len(remaining_top_cases)), num_indices)
+        for idx in unique_indices:
+            search_list.append(remaining_top_cases[idx])
+
+    return search_list
